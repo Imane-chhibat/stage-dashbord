@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau de Bord - Enseignants Bénévoles</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 25px 0;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .upload-section {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            margin-bottom: 30px;
+        }
+
+        .upload-area {
+            border: 3px dashed #3498db;
+            border-radius: 10px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background-color: #f8fafc;
+        }
+
+        .upload-area:hover {
+            background-color: #edf7ff;
+            border-color: #2980b9;
+        }
+
+        .upload-area i {
+            font-size: 48px;
+            color: #3498db;
+            margin-bottom: 15px;
+        }
+
+        .upload-area p {
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-name {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background-color 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            background-color: #2980b9;
+        }
+
+        .btn-process {
+            background-color: #2ecc71;
+            margin-left: 15px;
+        }
+
+        .btn-process:hover {
+            background-color: #27ae60;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            height: 100%;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .card-icon {
+            font-size: 24px;
+            color: #3498db;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-item {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+
+        .filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 25px;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .filter-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            background-color: #f9f9f9;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            margin-bottom: 30px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background-color: #f8fafc;
+            font-weight: 600;
+            color: #2c3e50;
+            position: sticky;
+            top: 0;
+        }
+
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #7f8c8d;
+            font-size: 14px;
+            border-top: 1px solid #eee;
+            margin-top: 30px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .color-1 { color: #3498db; }
+        .color-2 { color: #2ecc71; }
+        .color-3 { color: #e74c3c; }
+        .color-4 { color: #f39c12; }
+        .color-5 { color: #9b59b6; }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+                gap: 20px;
+            }
+            
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .filters {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <div>
+                    <h1><i class="fas fa-chart-line"></i> Tableau de Bord - Enseignants Bénévoles</h1>
+                    <p class="subtitle">Statistiques par établissement et par mois</p>
+                </div>
+                <div>
+                    <button class="btn" id="exportBtn">
+                        <i class="fas fa-download"></i> Exporter les données
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <section class="upload-section">
+            <h2><i class="fas fa-file-upload"></i> Importer un fichier Excel</h2>
+            <p>Téléchargez un fichier Excel avec les données des enseignants bénévoles. Le fichier doit contenir les colonnes suivantes : DDR, les heurs, grade, date début, date fin, nomber, Taux, Montant Brute, Returne, Montant net, CIN, Nom, Prénom, Mode de Paiement, Type référence règlement, Compte boncaire, Objet, le nom 2cole</p>
+            
+            <div class="upload-area" id="uploadArea">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p>Glissez-déposez votre fichier Excel ici ou cliquez pour parcourir</p>
+                <input type="file" id="fileInput" class="file-input" accept=".xlsx, .xls">
+                <button class="btn" id="browseBtn">Parcourir les fichiers</button>
+                <div class="file-name" id="fileName">Aucun fichier sélectionné</div>
+            </div>
+            
+            <div style="margin-top: 20px; text-align: center;">
+                <button class="btn btn-process" id="processBtn" disabled>
+                    <i class="fas fa-cogs"></i> Traiter les données
+                </button>
+                <button class="btn" id="sampleBtn">
+                    <i class="fas fa-eye"></i> Voir des données d'exemple
+                </button>
+            </div>
+        </section>
+
+        <div id="dashboardContent" class="hidden">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value color-1" id="totalTeachers">0</div>
+                    <div class="stat-label">Enseignants bénévoles</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value color-2" id="totalSchools">0</div>
+                    <div class="stat-label">Établissements</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value color-3" id="totalHours">0</div>
+                    <div class="stat-label">Heures totales</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value color-4" id="totalAmount">0</div>
+                    <div class="stat-label">Montant total (€)</div>
+                </div>
+            </div>
+
+            <div class="filters">
+                <div class="filter-group">
+                    <label for="schoolFilter"><i class="fas fa-school"></i> Filtrer par établissement</label>
+                    <select id="schoolFilter">
+                        <option value="all">Tous les établissements</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="monthFilter"><i class="fas fa-calendar-alt"></i> Filtrer par mois</label>
+                    <select id="monthFilter">
+                        <option value="all">Tous les mois</option>
+                        <option value="1">Janvier</option>
+                        <option value="2">Février</option>
+                        <option value="3">Mars</option>
+                        <option value="4">Avril</option>
+                        <option value="5">Mai</option>
+                        <option value="6">Juin</option>
+                        <option value="7">Juillet</option>
+                        <option value="8">Août</option>
+                        <option value="9">Septembre</option>
+                        <option value="10">Octobre</option>
+                        <option value="11">Novembre</option>
+                        <option value="12">Décembre</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="gradeFilter"><i class="fas fa-user-graduate"></i> Filtrer par grade</label>
+                    <select id="gradeFilter">
+                        <option value="all">Tous les grades</option>
+                        <option value="Professeur">Professeur</option>
+                        <option value="Maître">Maître</option>
+                        <option value="Assistant">Assistant</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="dashboard">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title"><i class="fas fa-chart-pie color-1"></i> Enseignants par établissement</div>
+                    </div>
+                    <div class="card-content">
+                        <canvas id="schoolChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title"><i class="fas fa-chart-bar color-2"></i> Heures par mois</div>
+                    </div>
+                    <div class="card-content">
+                        <canvas id="monthChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title"><i class="fas fa-money-bill-wave color-3"></i> Montant net par mois</div>
+                    </div>
+                    <div class="card-content">
+                        <canvas id="amountChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title"><i class="fas fa-users color-4"></i> Enseignants par grade</div>
+                    </div>
+                    <div class="card-content">
+                        <canvas id="gradeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <h3 style="padding: 20px 20px 0;">Détails des enseignants bénévoles</h3>
+                <table id="dataTable">
+                    <thead>
+                        <tr>
+                            <th>Établissement</th>
+                            <th>Nom</th>
+                            <th>Prénom</th>
+                            <th>CIN</th>
+                            <th>Grade</th>
+                            <th>Heures</th>
+                            <th>Montant net</th>
+                            <th>Mois</th>
+                            <th>Mode Paiement</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <!-- Les données seront insérées ici -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <footer>
+            <p>Tableau de bord des enseignants bénévoles &copy; 2023 - Développé pour le suivi des statistiques par établissement et par mois</p>
+        </footer>
+    </div>
+
+    <script>
+        // Variables globales
+        let rawData = [];
+        let filteredData = [];
+        let schoolChart, monthChart, amountChart, gradeChart;
+        
+        // Éléments DOM
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const browseBtn = document.getElementById('browseBtn');
+        const processBtn = document.getElementById('processBtn');
+        const fileName = document.getElementById('fileName');
+        const dashboardContent = document.getElementById('dashboardContent');
+        const sampleBtn = document.getElementById('sampleBtn');
+        const exportBtn = document.getElementById('exportBtn');
+        const schoolFilter = document.getElementById('schoolFilter');
+        const monthFilter = document.getElementById('monthFilter');
+        const gradeFilter = document.getElementById('gradeFilter');
+        const tableBody = document.getElementById('tableBody');
+        
+        // Éléments de statistiques
+        const totalTeachersEl = document.getElementById('totalTeachers');
+        const totalSchoolsEl = document.getElementById('totalSchools');
+        const totalHoursEl = document.getElementById('totalHours');
+        const totalAmountEl = document.getElementById('totalAmount');
+        
+        // Événements
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#2980b9';
+            uploadArea.style.backgroundColor = '#edf7ff';
+        });
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.style.borderColor = '#3498db';
+            uploadArea.style.backgroundColor = '#f8fafc';
+        });
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = '#3498db';
+            uploadArea.style.backgroundColor = '#f8fafc';
+            
+            if (e.dataTransfer.files.length) {
+                fileInput.files = e.dataTransfer.files;
+                updateFileName();
+            }
+        });
+        
+        browseBtn.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', updateFileName);
+        processBtn.addEventListener('click', processFile);
+        sampleBtn.addEventListener('click', loadSampleData);
+        exportBtn.addEventListener('click', exportData);
+        schoolFilter.addEventListener('change', filterData);
+        monthFilter.addEventListener('change', filterData);
+        gradeFilter.addEventListener('change', filterData);
+        
+        // Mettre à jour le nom du fichier sélectionné
+        function updateFileName() {
+            if (fileInput.files.length) {
+                fileName.textContent = `Fichier sélectionné: ${fileInput.files[0].name}`;
+                processBtn.disabled = false;
+            } else {
+                fileName.textContent = 'Aucun fichier sélectionné';
+                processBtn.disabled = true;
+            }
+        }
+        
+        // Traiter le fichier Excel
+        function processFile() {
+            if (!fileInput.files.length) return;
+            
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const data = e.target.result;
+                const workbook = XLSX.read(data, { type: 'binary' });
+                const firstSheet = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheet];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet);
+                
+                // Vérifier si les colonnes nécessaires sont présentes
+                if (jsonData.length === 0) {
+                    alert("Le fichier Excel est vide ou ne contient pas de données.");
+                    return;
+                }
+                
+                // Transformer les données
+                rawData = transformData(jsonData);
+                filteredData = [...rawData];
+                
+                // Afficher le tableau de bord
+                dashboardContent.classList.remove('hidden');
+                
+                // Initialiser les filtres
+                initializeFilters();
+                
+                // Mettre à jour les visualisations
+                updateDashboard();
+                
+                // Faire défiler jusqu'au tableau de bord
+                dashboardContent.scrollIntoView({ behavior: 'smooth' });
+            };
+            
+            reader.onerror = function() {
+                alert("Erreur lors de la lecture du fichier. Veuillez vérifier que le fichier est valide.");
+            };
+            
+            reader.readAsBinaryString(file);
+        }
+        
+        // Transformer les données Excel en format utilisable
+        function transformData(excelData) {
+            return excelData.map(item => {
+                // Extraire le mois de la date de début
+                let month = 0;
+                if (item['date début']) {
+                    const date = new Date(item['date début']);
+                    if (!isNaN(date)) {
+                        month = date.getMonth() + 1; // Mois de 1 à 12
+                    }
+                }
+                
+                // Assurer que les valeurs numériques sont correctement converties
+                const hours = parseFloat(item['les heurs']) || 0;
+                const netAmount = parseFloat(item['Montant net']) || 0;
+                const schoolName = item['le nom 2cole'] || 'Non spécifié';
+                const grade = item['grade'] || 'Non spécifié';
+                
+                return {
+                    ddr: item['DDR'] || '',
+                    hours: hours,
+                    grade: grade,
+                    startDate: item['date début'] || '',
+                    endDate: item['date fin'] || '',
+                    number: item['nomber'] || 0,
+                    rate: item['Taux'] || 0,
+                    grossAmount: item['Montant Brute'] || 0,
+                    return: item['Returne'] || 0,
+                    netAmount: netAmount,
+                    cin: item['CIN'] || '',
+                    lastName: item['Nom'] || '',
+                    firstName: item['Prénom'] || '',
+                    paymentMethod: item['Mode de Paiement'] || '',
+                    paymentRefType: item['Type référence règlement'] || '',
+                    bankAccount: item['Compte boncaire'] || '',
+                    object: item['Objet'] || '',
+                    school: schoolName,
+                    month: month,
+                    monthName: getMonthName(month)
+                };
+            });
+        }
+        
+        // Obtenir le nom du mois à partir du numéro
+        function getMonthName(monthNumber) {
+            const months = [
+                'Non spécifié', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+                'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+            ];
+            return months[monthNumber] || 'Non spécifié';
+        }
+        
+        // Charger des données d'exemple
+        function loadSampleData() {
+            // Données d'exemple
+            const sampleData = [
+                {
+                    DDR: 'DDR001',
+                    'les heurs': 20,
+                    grade: 'Professeur',
+                    'date début': '2023-01-10',
+                    'date fin': '2023-01-30',
+                    nomber: 1,
+                    Taux: 15,
+                    'Montant Brute': 300,
+                    Returne: 0,
+                    'Montant net': 300,
+                    CIN: 'AB123456',
+                    Nom: 'Dupont',
+                    Prénom: 'Jean',
+                    'Mode de Paiement': 'Virement',
+                    'Type référence règlement': 'Régulier',
+                    'Compte boncaire': 'FR76 1234 5678 9012 3456 7890 123',
+                    Objet: 'Cours de mathématiques',
+                    'le nom 2cole': 'Lycée Victor Hugo'
+                },
+                {
+                    DDR: 'DDR002',
+                    'les heurs': 15,
+                    grade: 'Maître',
+                    'date début': '2023-01-15',
+                    'date fin': '2023-01-25',
+                    nomber: 1,
+                    Taux: 12,
+                    'Montant Brute': 180,
+                    Returne: 0,
+                    'Montant net': 180,
+                    CIN: 'CD789012',
+                    Nom: 'Martin',
+                    Prénom: 'Sophie',
+                    'Mode de Paiement': 'Chèque',
+                    'Type référence règlement': 'Exceptionnel',
+                    'Compte boncaire': 'FR76 9876 5432 1098 7654 3210 987',
+                    Objet: 'Cours de français',
+                    'le nom 2cole': 'Collège Jules Verne'
+                },
+                {
+                    DDR: 'DDR003',
+                    'les heurs': 30,
+                    grade: 'Professeur',
+                    'date début': '2023-02-05',
+                    'date fin': '2023-02-28',
+                    nomber: 1,
+                    Taux: 15,
+                    'Montant Brute': 450,
+                    Returne: 0,
+                    'Montant net': 450,
+                    CIN: 'EF345678',
+                    Nom: 'Bernard',
+                    Prénom: 'Pierre',
+                    'Mode de Paiement': 'Virement',
+                    'Type référence règlement': 'Régulier',
+                    'Compte boncaire': 'FR76 5555 6666 7777 8888 9999 000',
+                    Objet: 'Cours de physique',
+                    'le nom 2cole': 'Lycée Victor Hugo'
+                },
+                {
+                    DDR: 'DDR004',
+                    'les heurs': 25,
+                    grade: 'Assistant',
+                    'date début': '2023-02-10',
+                    'date fin': '2023-02-20',
+                    nomber: 1,
+                    Taux: 10,
+                    'Montant Brute': 250,
+                    Returne: 0,
+                    'Montant net': 250,
+                    CIN: 'GH901234',
+                    Nom: 'Petit',
+                    Prénom: 'Marie',
+                    'Mode de Paiement': 'Espèces',
+                    'Type référence règlement': 'Exceptionnel',
+                    'Compte boncaire': 'FR76 1111 2222 3333 4444 5555 666',
+                    Objet: 'Cours d\'histoire',
+                    'le nom 2cole': 'Collège Albert Camus'
+                },
+                {
+                    DDR: 'DDR005',
+                    'les heurs': 18,
+                    grade: 'Maître',
+                    'date début': '2023-03-01',
+                    'date fin': '2023-03-15',
+                    nomber: 1,
+                    Taux: 12,
+                    'Montant Brute': 216,
+                    Returne: 0,
+                    'Montant net': 216,
+                    CIN: 'IJ567890',
+                    Nom: 'Robert',
+                    Prénom: 'Claude',
+                    'Mode de Paiement': 'Virement',
+                    'Type référence règlement': 'Régulier',
+                    'Compte boncaire': 'FR76 7777 8888 9999 0000 1111 222',
+                    Objet: 'Cours de chimie',
+                    'le nom 2cole': 'Lycée Victor Hugo'
+                },
+                {
+                    DDR: 'DDR006',
+                    'les heurs': 22,
+                    grade: 'Professeur',
+                    'date début': '2023-03-10',
+                    'date fin': '2023-03-31',
+                    nomber: 1,
+                    Taux: 15,
+                    'Montant Brute': 330,
+                    Returne: 0,
+                    'Montant net': 330,
+                    CIN: 'KL123456',
+                    Nom: 'Richard',
+                    Prénom: 'Luc',
+                    'Mode de Paiement': 'Chèque',
+                    'Type référence règlement': 'Régulier',
+                    'Compte boncaire': 'FR76 3333 4444 5555 6666 7777 888',
+                    Objet: 'Cours de mathématiques',
+                    'le nom 2cole': 'Collège Jules Verne'
+                }
+            ];
+            
+            // Transformer les données d'exemple
+            rawData = transformData(sampleData);
+            filteredData = [...rawData];
+            
+            // Afficher le tableau de bord
+            dashboardContent.classList.remove('hidden');
+            
+            // Initialiser les filtres
+            initializeFilters();
+            
+            // Mettre à jour les visualisations
+            updateDashboard();
+            
+            // Faire défiler jusqu'au tableau de bord
+            dashboardContent.scrollIntoView({ behavior: 'smooth' });
+            
+            // Mettre à jour le message
+            fileName.textContent = "Données d'exemple chargées";
+            processBtn.disabled = true;
+        }
+        
+        // Initialiser les filtres
+        function initializeFilters() {
+            // Récupérer les écoles uniques
+            const schools = [...new Set(rawData.map(item => item.school))].sort();
+            
+            // Vider et remplir le filtre des écoles
+            schoolFilter.innerHTML = '<option value="all">Tous les établissements</option>';
+            schools.forEach(school => {
+                const option = document.createElement('option');
+                option.value = school;
+                option.textContent = school;
+                schoolFilter.appendChild(option);
+            });
+        }
+        
+        // Filtrer les données
+        function filterData() {
+            const schoolValue = schoolFilter.value;
+            const monthValue = monthFilter.value;
+            const gradeValue = gradeFilter.value;
+            
+            filteredData = rawData.filter(item => {
+                // Filtrer par école
+                if (schoolValue !== 'all' && item.school !== schoolValue) return false;
+                
+                // Filtrer par mois
+                if (monthValue !== 'all' && item.month.toString() !== monthValue) return false;
+                
+                // Filtrer par grade
+                if (gradeValue !== 'all' && item.grade !== gradeValue) return false;
+                
+                return true;
+            });
+            
+            updateDashboard();
+        }
+        
+        // Mettre à jour le tableau de bord
+        function updateDashboard() {
+            // Mettre à jour les statistiques
+            updateStats();
+            
+            // Mettre à jour les graphiques
+            updateCharts();
+            
+            // Mettre à jour le tableau
+            updateTable();
+        }
+        
+        // Mettre à jour les statistiques
+        function updateStats() {
+            const teachers = new Set(filteredData.map(item => item.cin)).size;
+            const schools = new Set(filteredData.map(item => item.school)).size;
+            const totalHours = filteredData.reduce((sum, item) => sum + item.hours, 0);
+            const totalAmount = filteredData.reduce((sum, item) => sum + item.netAmount, 0);
+            
+            totalTeachersEl.textContent = teachers;
+            totalSchoolsEl.textContent = schools;
+            totalHoursEl.textContent = totalHours.toFixed(1);
+            totalAmountEl.textContent = totalAmount.toFixed(2);
+        }
+        
+        // Mettre à jour les graphiques
+        function updateCharts() {
+            updateSchoolChart();
+            updateMonthChart();
+            updateAmountChart();
+            updateGradeChart();
+        }
+        
+        // Graphique des enseignants par établissement
+        function updateSchoolChart() {
+            const ctx = document.getElementById('schoolChart').getContext('2d');
+            
+            // Compter les enseignants par école (basé sur CIN unique)
+            const schoolTeachers = {};
+            filteredData.forEach(item => {
+                if (!schoolTeachers[item.school]) {
+                    schoolTeachers[item.school] = new Set();
+                }
+                schoolTeachers[item.school].add(item.cin);
+            });
+            
+            const schools = Object.keys(schoolTeachers);
+            const teacherCounts = schools.map(school => schoolTeachers[school].size);
+            
+            // Couleurs
+            const colors = schools.map((_, i) => 
+                `hsl(${i * 360 / schools.length}, 70%, 60%)`
+            );
+            
+            if (schoolChart) {
+                schoolChart.destroy();
+            }
+            
+            schoolChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: schools,
+                    datasets: [{
+                        data: teacherCounts,
+                        backgroundColor: colors,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true
+                            }
+                        },
+                        title: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Graphique des heures par mois
+        function updateMonthChart() {
+            const ctx = document.getElementById('monthChart').getContext('2d');
+            
+            // Regrouper par mois
+            const monthHours = Array(12).fill(0);
+            filteredData.forEach(item => {
+                if (item.month >= 1 && item.month <= 12) {
+                    monthHours[item.month - 1] += item.hours;
+                }
+            });
+            
+            const monthNames = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
+            
+            if (monthChart) {
+                monthChart.destroy();
+            }
+            
+            monthChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: monthNames,
+                    datasets: [{
+                        label: 'Heures',
+                        data: monthHours,
+                        backgroundColor: '#2ecc71',
+                        borderColor: '#27ae60',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Heures'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Mois'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Graphique du montant net par mois
+        function updateAmountChart() {
+            const ctx = document.getElementById('amountChart').getContext('2d');
+            
+            // Regrouper par mois
+            const monthAmounts = Array(12).fill(0);
+            filteredData.forEach(item => {
+                if (item.month >= 1 && item.month <= 12) {
+                    monthAmounts[item.month - 1] += item.netAmount;
+                }
+            });
+            
+            const monthNames = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
+            
+            if (amountChart) {
+                amountChart.destroy();
+            }
+            
+            amountChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: monthNames,
+                    datasets: [{
+                        label: 'Montant net (€)',
+                        data: monthAmounts,
+                        backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                        borderColor: '#e74c3c',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Montant (€)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Mois'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Graphique des enseignants par grade
+        function updateGradeChart() {
+            const ctx = document.getElementById('gradeChart').getContext('2d');
+            
+            // Compter les enseignants par grade (basé sur CIN unique)
+            const gradeTeachers = {};
+            filteredData.forEach(item => {
+                if (!gradeTeachers[item.grade]) {
+                    gradeTeachers[item.grade] = new Set();
+                }
+                gradeTeachers[item.grade].add(item.cin);
+            });
+            
+            const grades = Object.keys(gradeTeachers);
+            const teacherCounts = grades.map(grade => gradeTeachers[grade].size);
+            
+            // Couleurs
+            const colors = ['#3498db', '#2ecc71', '#e74c3c', '#f39c12', '#9b59b6'];
+            
+            if (gradeChart) {
+                gradeChart.destroy();
+            }
+            
+            gradeChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: grades,
+                    datasets: [{
+                        data: teacherCounts,
+                        backgroundColor: colors.slice(0, grades.length),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true
+                            }
+                        },
+                        title: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Mettre à jour le tableau de données
+        function updateTable() {
+            tableBody.innerHTML = '';
+            
+            filteredData.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.school}</td>
+                    <td>${item.lastName}</td>
+                    <td>${item.firstName}</td>
+                    <td>${item.cin}</td>
+                    <td>${item.grade}</td>
+                    <td>${item.hours.toFixed(1)}</td>
+                    <td>${item.netAmount.toFixed(2)} €</td>
+                    <td>${item.monthName}</td>
+                    <td>${item.paymentMethod}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+            
+            // Si pas de données
+            if (filteredData.length === 0) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td colspan="9" style="text-align: center; padding: 30px;">
+                        Aucune donnée ne correspond aux filtres sélectionnés
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            }
+        }
+        
+        // Exporter les données
+        function exportData() {
+            if (filteredData.length === 0) {
+                alert("Aucune donnée à exporter.");
+                return;
+            }
+            
+            // Préparer les données pour l'export
+            const exportData = filteredData.map(item => ({
+                'Établissement': item.school,
+                'Nom': item.lastName,
+                'Prénom': item.firstName,
+                'CIN': item.cin,
+                'Grade': item.grade,
+                'Heures': item.hours,
+                'Montant net': item.netAmount,
+                'Mois': item.monthName,
+                'Mode de Paiement': item.paymentMethod,
+                'Date début': item.startDate,
+                'Date fin': item.endDate
+            }));
+            
+            // Créer une feuille de calcul
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Statistiques");
+            
+            // Générer et télécharger le fichier
+            XLSX.writeFile(wb, "statistiques_enseignants_benevoles.xlsx");
+        }
+        
+        // Initialiser l'application
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("Tableau de bord des enseignants bénévoles initialisé");
+        });
+    </script>
+</body>
+</html>
