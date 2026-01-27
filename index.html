@@ -1,0 +1,1542 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard Pédagogique - Analyse des Résultats Scolaires</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <!-- SheetJS -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+
+    <style>
+      :root {
+        --color-excellent: #28a745;
+        --color-good: #5cb85c;
+        --color-average: #ffc107;
+        --color-weak: #fd7e14;
+        --color-poor: #dc3545;
+        --color-primary: #0d6efd;
+        --color-secondary: #6c757d;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px 0;
+      }
+
+      .main-container {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        padding: 30px;
+        margin: 0 auto;
+        max-width: 1400px;
+      }
+
+      .header-section {
+        text-align: center;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 3px solid var(--color-primary);
+      }
+
+      .header-section h1 {
+        color: #2c3e50;
+        font-weight: 700;
+        margin-bottom: 10px;
+      }
+
+      .header-section p {
+        color: #7f8c8d;
+        font-size: 1.1rem;
+      }
+
+      .upload-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 10px;
+        padding: 40px;
+        text-align: center;
+        margin-bottom: 30px;
+        color: white;
+      }
+
+      .upload-section h3 {
+        margin-bottom: 20px;
+      }
+
+      .file-input-wrapper {
+        position: relative;
+        display: inline-block;
+        cursor: pointer;
+        background: white;
+        color: #667eea;
+        padding: 15px 40px;
+        border-radius: 50px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+      }
+
+      .file-input-wrapper:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      }
+
+      .file-input-wrapper input[type="file"] {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+        width: 100%;
+        height: 100%;
+        left: 0;
+        top: 0;
+      }
+
+      .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 20px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+      }
+
+      .stats-card:hover {
+        transform: translateY(-5px);
+      }
+
+      .stats-card .icon {
+        font-size: 3rem;
+        opacity: 0.8;
+        margin-bottom: 10px;
+      }
+
+      .stats-card .number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 10px 0;
+      }
+
+      .stats-card .label {
+        font-size: 1rem;
+        opacity: 0.9;
+      }
+
+      .card-custom {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        margin-bottom: 25px;
+        overflow: hidden;
+      }
+
+      .card-custom .card-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        font-weight: 600;
+        font-size: 1.2rem;
+        padding: 15px 20px;
+        border: none;
+      }
+
+      .card-custom .card-body {
+        padding: 20px;
+      }
+
+      .filter-section {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 25px;
+      }
+
+      .filter-section label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 8px;
+      }
+
+      .filter-section select {
+        border-radius: 8px;
+        border: 2px solid #dee2e6;
+        padding: 10px 15px;
+      }
+
+      .filter-section select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+      }
+
+      .table-wrapper {
+        overflow-x: auto;
+        border-radius: 10px;
+      }
+
+      .table-custom {
+        margin-bottom: 0;
+      }
+
+      .table-custom thead {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+      }
+
+      .table-custom thead th {
+        border: none;
+        padding: 15px;
+        font-weight: 600;
+      }
+
+      .table-custom tbody tr {
+        transition: all 0.3s ease;
+      }
+
+      .table-custom tbody tr:hover {
+        background-color: #f8f9fa;
+        transform: scale(1.01);
+      }
+
+      .table-custom tbody td {
+        padding: 12px 15px;
+        vertical-align: middle;
+      }
+
+      .badge-rank {
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.9rem;
+      }
+
+      .rank-1 {
+        background: linear-gradient(135deg, #ffd700, #ffa500);
+        color: white;
+      }
+      .rank-2 {
+        background: linear-gradient(135deg, #c0c0c0, #a8a8a8);
+        color: white;
+      }
+      .rank-3 {
+        background: linear-gradient(135deg, #cd7f32, #b87333);
+        color: white;
+      }
+      .rank-other {
+        background: #6c757d;
+        color: white;
+      }
+
+      .level-badge {
+        padding: 5px 12px;
+        border-radius: 15px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        display: inline-block;
+        min-width: 60px;
+        text-align: center;
+      }
+
+      .level-a {
+        background-color: var(--color-excellent);
+        color: white;
+      }
+      .level-b {
+        background-color: var(--color-good);
+        color: white;
+      }
+      .level-c {
+        background-color: var(--color-average);
+        color: #333;
+      }
+      .level-d {
+        background-color: var(--color-poor);
+        color: white;
+      }
+
+      .chart-container {
+        position: relative;
+        height: 400px;
+        margin: 20px 0;
+      }
+
+      .btn-print {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 50px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+      }
+
+      .btn-print:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        color: white;
+      }
+
+      .loading-spinner {
+        display: none;
+        text-align: center;
+        padding: 40px;
+      }
+
+      .loading-spinner.active {
+        display: block;
+      }
+
+      .spinner-border {
+        width: 3rem;
+        height: 3rem;
+        border-width: 0.3rem;
+      }
+
+      .dashboard-content {
+        display: none;
+      }
+
+      .dashboard-content.active {
+        display: block;
+        animation: fadeIn 0.5s ease;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .search-box {
+        position: relative;
+        margin-bottom: 20px;
+      }
+
+      .search-box input {
+        border-radius: 50px;
+        padding: 12px 20px 12px 45px;
+        border: 2px solid #dee2e6;
+        width: 100%;
+      }
+
+      .search-box input:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+      }
+
+      .search-box i {
+        position: absolute;
+        left: 18px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+      }
+
+      .no-data {
+        text-align: center;
+        padding: 60px 20px;
+        color: #6c757d;
+      }
+
+      .no-data i {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        opacity: 0.5;
+      }
+
+      .competence-text {
+        font-size: 0.85rem;
+        color: #6c757d;
+        font-style: italic;
+        max-width: 300px;
+      }
+
+      /* Styles d'impression */
+      @media print {
+        body {
+          background: white;
+          padding: 0;
+        }
+
+        .main-container {
+          box-shadow: none;
+          padding: 20px;
+        }
+
+        .upload-section,
+        .filter-section,
+        .btn-print,
+        .search-box {
+          display: none !important;
+        }
+
+        .card-custom {
+          page-break-inside: avoid;
+          box-shadow: none;
+          border: 1px solid #dee2e6;
+        }
+
+        .stats-card {
+          box-shadow: none;
+          border: 1px solid #dee2e6;
+        }
+
+        .chart-container {
+          page-break-inside: avoid;
+        }
+
+        .table-custom {
+          font-size: 0.9rem;
+        }
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        .main-container {
+          padding: 15px;
+        }
+
+        .chart-container {
+          height: 300px;
+        }
+
+        .stats-card .number {
+          font-size: 2rem;
+        }
+
+        .stats-card .icon {
+          font-size: 2rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container-fluid">
+      <div class="main-container">
+        <!-- En-tête -->
+        <div class="header-section">
+          <h1><i class="fas fa-chart-line me-2"></i>Dashboard Pédagogique</h1>
+          <p>Analyse des Résultats Scolaires - Délégation de l'Éducation</p>
+        </div>
+
+        <!-- Section d'import de fichier -->
+        <div class="upload-section" id="uploadSection">
+          <h3>
+            <i class="fas fa-file-excel me-2"></i>Importer le Fichier Excel
+          </h3>
+          <p class="mb-4">
+            Sélectionnez le fichier contenant les statistiques des taux de
+            maîtrise
+          </p>
+          <div class="file-input-wrapper">
+            <i class="fas fa-upload me-2"></i>Choisir un fichier Excel
+            <input type="file" id="fileInput" accept=".xlsx, .xls" />
+          </div>
+          <p class="mt-3 mb-0"><small>Format accepté : .xlsx, .xls</small></p>
+        </div>
+
+        <!-- Spinner de chargement -->
+        <div class="loading-spinner" id="loadingSpinner">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Chargement...</span>
+          </div>
+          <p class="mt-3 text-secondary">Traitement des données en cours...</p>
+        </div>
+
+        <!-- Contenu du dashboard -->
+        <div class="dashboard-content" id="dashboardContent">
+          <!-- Bouton d'impression -->
+          <div class="text-end mb-4">
+            <button class="btn-print" onclick="window.print()">
+              <i class="fas fa-print me-2"></i>Imprimer le Rapport
+            </button>
+          </div>
+
+          <!-- Section de filtrage -->
+          <div class="filter-section">
+            <div class="row align-items-end">
+              <div class="col-md-3 mb-3 mb-md-0">
+                <label for="communeFilter">
+                  <i class="fas fa-map-marker-alt me-2"></i>Filtrer par Commune
+                </label>
+                <select class="form-select" id="communeFilter">
+                  <option value="all">Toutes les communes</option>
+                </select>
+              </div>
+              <div class="col-md-3 mb-3 mb-md-0">
+                <label for="etablissementFilter">
+                  <i class="fas fa-school me-2"></i>Filtrer par Établissement
+                </label>
+                <select class="form-select" id="etablissementFilter">
+                  <option value="all">Tous les établissements</option>
+                </select>
+              </div>
+              <div class="col-md-3 mb-3 mb-md-0">
+                <label for="matiereFilter">
+                  <i class="fas fa-book me-2"></i>Filtrer par Matière
+                </label>
+                <select class="form-select" id="matiereFilter">
+                  <option value="all">Toutes les matières</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <button
+                  class="btn btn-secondary w-100"
+                  onclick="resetFilters()"
+                >
+                  <i class="fas fa-redo me-2"></i>Réinitialiser les filtres
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Indicateurs généraux (Sans Total Élèves) -->
+          <div class="row mb-4">
+            <div class="col-md-4 col-sm-6">
+              <div class="stats-card">
+                <div class="icon"><i class="fas fa-school"></i></div>
+                <div class="number" id="totalEcoles">0</div>
+                <div class="label">Total Écoles</div>
+              </div>
+            </div>
+            <div class="col-md-4 col-sm-6">
+              <div class="stats-card">
+                <div class="icon"><i class="fas fa-map-marked-alt"></i></div>
+                <div class="number" id="totalCommunes">0</div>
+                <div class="label">Communes</div>
+              </div>
+            </div>
+            <div class="col-md-4 col-sm-6">
+              <div class="stats-card">
+                <div class="icon"><i class="fas fa-book-open"></i></div>
+                <div class="number" id="totalMatieres">0</div>
+                <div class="label">Matières</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Graphiques -->
+          <div class="row">
+            <div class="col-lg-8 mb-4">
+              <div class="card-custom">
+                <div class="card-header">
+                  <i class="fas fa-chart-bar me-2"></i>Répartition des Niveaux
+                  de Maîtrise
+                </div>
+                <div class="card-body">
+                  <div class="chart-container">
+                    <canvas id="niveauxChart"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-4 mb-4">
+              <div class="card-custom">
+                <div class="card-header">
+                  <i class="fas fa-chart-pie me-2"></i>Distribution A/B/C/D
+                </div>
+                <div class="card-body">
+                  <div class="chart-container">
+                    <canvas id="distributionChart"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Graphique par matière -->
+          <div class="row">
+            <div class="col-12 mb-4">
+              <div class="card-custom">
+                <div class="card-header">
+                  <i class="fas fa-graduation-cap me-2"></i>Performance par
+                  Matière
+                </div>
+                <div class="card-body">
+                  <div class="chart-container">
+                    <canvas id="matiereChart"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Analyse par Commune -->
+          <div class="row">
+            <div class="col-12 mb-4">
+              <div class="card-custom">
+                <div class="card-header">
+                  <i class="fas fa-map-marker-alt me-2"></i>Statistiques par
+                  Commune
+                </div>
+                <div class="card-body">
+                  <div class="table-wrapper">
+                    <table class="table table-custom table-hover">
+                      <thead>
+                        <tr>
+                          <th>Commune</th>
+                          <th class="text-center">Écoles</th>
+                          <th class="text-center">Niveau A</th>
+                          <th class="text-center">Niveau B</th>
+                          <th class="text-center">Niveau C</th>
+                          <th class="text-center">Niveau D</th>
+                        </tr>
+                      </thead>
+                      <tbody id="communeStatsTable"></tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Top 5 par matière -->
+          <div class="row">
+            <div class="col-lg-6 mb-4">
+              <div class="card-custom">
+                <div class="card-header">
+                  <i class="fas fa-trophy me-2"></i>Top 5 - Meilleurs
+                  Performances par Matière
+                </div>
+                <div class="card-body">
+                  <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input
+                      type="text"
+                      id="searchTopMatiere"
+                      class="form-control"
+                      placeholder="Rechercher une matière..."
+                    />
+                  </div>
+                  <div id="topPerformersContainer"></div>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-6 mb-4">
+              <div class="card-custom">
+                <div class="card-header">
+                  <i class="fas fa-exclamation-triangle me-2"></i>Top 5 -
+                  Performances Faibles par Matière
+                </div>
+                <div class="card-body">
+                  <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input
+                      type="text"
+                      id="searchBottomMatiere"
+                      class="form-control"
+                      placeholder="Rechercher une matière..."
+                    />
+                  </div>
+                  <div id="bottomPerformersContainer"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Détails des niveaux -->
+          <div class="row">
+            <div class="col-12 mb-4">
+              <div class="card-custom">
+                <div class="card-header">
+                  <i class="fas fa-layer-group me-2"></i>Répartition Détaillée
+                  des Niveaux
+                </div>
+                <div class="card-body">
+                  <div class="row text-center">
+                    <div class="col-md-3 col-6 mb-3">
+                      <div
+                        class="p-3 rounded"
+                        style="background-color: rgba(40, 167, 69, 0.1)"
+                      >
+                        <div class="level-badge level-a mb-2">Niveau A</div>
+                        <h3 class="mb-1" id="percentA">0%</h3>
+                        <p class="text-muted mb-0">
+                          <small>Maîtrise Excellente</small>
+                        </p>
+                      </div>
+                    </div>
+                    <div class="col-md-3 col-6 mb-3">
+                      <div
+                        class="p-3 rounded"
+                        style="background-color: rgba(92, 184, 92, 0.1)"
+                      >
+                        <div class="level-badge level-b mb-2">Niveau B</div>
+                        <h3 class="mb-1" id="percentB">0%</h3>
+                        <p class="text-muted mb-0">
+                          <small>Maîtrise Bonne</small>
+                        </p>
+                      </div>
+                    </div>
+                    <div class="col-md-3 col-6 mb-3">
+                      <div
+                        class="p-3 rounded"
+                        style="background-color: rgba(255, 193, 7, 0.1)"
+                      >
+                        <div class="level-badge level-c mb-2">Niveau C</div>
+                        <h3 class="mb-1" id="percentC">0%</h3>
+                        <p class="text-muted mb-0">
+                          <small>Maîtrise Moyenne</small>
+                        </p>
+                      </div>
+                    </div>
+                    <div class="col-md-3 col-6 mb-3">
+                      <div
+                        class="p-3 rounded"
+                        style="background-color: rgba(220, 53, 69, 0.1)"
+                      >
+                        <div class="level-badge level-d mb-2">Niveau D</div>
+                        <h3 class="mb-1" id="percentD">0%</h3>
+                        <p class="text-muted mb-0">
+                          <small>Maîtrise Insuffisante</small>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Script principal -->
+    <script>
+      // ========================================
+      // VARIABLES GLOBALES
+      // ========================================
+      let rawData = [];
+      let filteredData = [];
+      let charts = {
+        niveaux: null,
+        distribution: null,
+        matiere: null,
+      };
+
+      // ========================================
+      // GESTION DE L'IMPORT DU FICHIER EXCEL
+      // ========================================
+      document
+        .getElementById("fileInput")
+        .addEventListener("change", handleFileUpload);
+
+      function handleFileUpload(event) {
+        const file = event.target.files[0];
+
+        if (!file) {
+          return;
+        }
+
+        // Vérification du type de fichier
+        const fileName = file.name;
+        const fileExtension = fileName.split(".").pop().toLowerCase();
+
+        if (fileExtension !== "xlsx" && fileExtension !== "xls") {
+          alert(
+            "Veuillez sélectionner un fichier Excel valide (.xlsx ou .xls)",
+          );
+          return;
+        }
+
+        // Afficher le spinner de chargement
+        showLoading();
+
+        // Lire le fichier Excel
+        const reader = new FileReader();
+
+        reader.onload = function (e) {
+          try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: "array" });
+
+            // Lire la première feuille
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+
+            // Convertir en JSON
+            const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+            if (jsonData.length === 0) {
+              alert("Le fichier Excel est vide ou mal formaté");
+              hideLoading();
+              return;
+            }
+
+            // Stocker les données brutes
+            rawData = jsonData;
+            filteredData = [...rawData];
+
+            // Initialiser le dashboard
+            setTimeout(() => {
+              initializeDashboard();
+              hideLoading();
+              showDashboard();
+            }, 500);
+          } catch (error) {
+            console.error("Erreur lors de la lecture du fichier:", error);
+            alert(
+              "Erreur lors du traitement du fichier Excel. Veuillez vérifier le format.",
+            );
+            hideLoading();
+          }
+        };
+
+        reader.onerror = function () {
+          alert("Erreur lors de la lecture du fichier");
+          hideLoading();
+        };
+
+        reader.readAsArrayBuffer(file);
+      }
+
+      // ========================================
+      // AFFICHAGE DES SECTIONS
+      // ========================================
+      function showLoading() {
+        document.getElementById("loadingSpinner").classList.add("active");
+        document.getElementById("uploadSection").style.display = "none";
+      }
+
+      function hideLoading() {
+        document.getElementById("loadingSpinner").classList.remove("active");
+      }
+
+      function showDashboard() {
+        document.getElementById("dashboardContent").classList.add("active");
+        document.getElementById("uploadSection").style.display = "none";
+      }
+
+      // ========================================
+      // INITIALISATION DU DASHBOARD
+      // ========================================
+      function initializeDashboard() {
+        // Remplir les filtres
+        populateFilters();
+
+        // Calculer et afficher les statistiques
+        calculateAndDisplayStats();
+
+        // Créer les graphiques
+        createCharts();
+
+        // Afficher les tableaux
+        displayCommuneStats();
+        displayTopPerformers();
+      }
+
+      // ========================================
+      // REMPLISSAGE DES FILTRES
+      // ========================================
+      function populateFilters() {
+        // Extraire les communes uniques
+        const communes = [...new Set(rawData.map((row) => row.Commune))].sort();
+        const communeSelect = document.getElementById("communeFilter");
+        communeSelect.innerHTML =
+          '<option value="all">Toutes les communes</option>';
+        communes.forEach((commune) => {
+          if (commune) {
+            const option = document.createElement("option");
+            option.value = commune;
+            option.textContent = commune;
+            communeSelect.appendChild(option);
+          }
+        });
+
+        // Extraire les établissements uniques
+        const etablissements = [...new Set(rawData.map((row) => row.Etablissement))].sort();
+        const etablissementSelect = document.getElementById("etablissementFilter");
+        etablissementSelect.innerHTML =
+          '<option value="all">Tous les établissements</option>';
+        etablissements.forEach((etablissement) => {
+          if (etablissement) {
+            const option = document.createElement("option");
+            option.value = etablissement;
+            option.textContent = etablissement;
+            etablissementSelect.appendChild(option);
+          }
+        });
+
+        // Extraire les matières uniques
+        const matieres = [
+          ...new Set(rawData.map((row) => row["Matière"])),
+        ].sort();
+        const matiereSelect = document.getElementById("matiereFilter");
+        matiereSelect.innerHTML =
+          '<option value="all">Toutes les matières</option>';
+        matieres.forEach((matiere) => {
+          if (matiere) {
+            const option = document.createElement("option");
+            option.value = matiere;
+            option.textContent = matiere;
+            matiereSelect.appendChild(option);
+          }
+        });
+
+        // Ajouter les événements de filtrage
+        communeSelect.addEventListener("change", applyFilters);
+        etablissementSelect.addEventListener("change", applyFilters);
+        matiereSelect.addEventListener("change", applyFilters);
+      }
+
+      // ========================================
+      // APPLICATION DES FILTRES
+      // ========================================
+      function applyFilters() {
+        const communeFilter = document.getElementById("communeFilter").value;
+        const etablissementFilter = document.getElementById("etablissementFilter").value;
+        const matiereFilter = document.getElementById("matiereFilter").value;
+
+        filteredData = rawData.filter((row) => {
+          const communeMatch =
+            communeFilter === "all" || row.Commune === communeFilter;
+          const etablissementMatch =
+            etablissementFilter === "all" || row.Etablissement === etablissementFilter;
+          const matiereMatch =
+            matiereFilter === "all" || row["Matière"] === matiereFilter;
+          return communeMatch && etablissementMatch && matiereMatch;
+        });
+
+        // Mettre à jour le dashboard
+        calculateAndDisplayStats();
+        updateCharts();
+        displayCommuneStats();
+        displayTopPerformers();
+      }
+
+      function resetFilters() {
+        document.getElementById("communeFilter").value = "all";
+        document.getElementById("etablissementFilter").value = "all";
+        document.getElementById("matiereFilter").value = "all";
+        applyFilters();
+      }
+
+      // ========================================
+      // CALCUL ET AFFICHAGE DES STATISTIQUES
+      // ========================================
+      function calculateAndDisplayStats() {
+        // Total des écoles uniques
+        const ecoles = new Set(
+          filteredData.map((row) => row.Etablissement).filter((e) => e),
+        );
+        const totalEcoles = ecoles.size;
+
+        // Total des communes uniques
+        const communes = new Set(
+          filteredData.map((row) => row.Commune).filter((c) => c),
+        );
+        const totalCommunes = communes.size;
+
+        // Total des matières uniques
+        const matieres = new Set(
+          filteredData.map((row) => row["Matière"]).filter((m) => m),
+        );
+        const totalMatieres = matieres.size;
+
+        // Afficher les statistiques
+        document.getElementById("totalEcoles").textContent = totalEcoles;
+        document.getElementById("totalCommunes").textContent = totalCommunes;
+        document.getElementById("totalMatieres").textContent = totalMatieres;
+
+        // Calculer les pourcentages par niveau
+        const totalA = filteredData.reduce((sum, row) => sum + (row.A || 0), 0);
+        const totalB = filteredData.reduce((sum, row) => sum + (row.B || 0), 0);
+        const totalC = filteredData.reduce((sum, row) => sum + (row.C || 0), 0);
+        const totalD = filteredData.reduce((sum, row) => sum + (row.D || 0), 0);
+
+        const total = totalA + totalB + totalC + totalD;
+
+        if (total > 0) {
+          const percentA = ((totalA / total) * 100).toFixed(1);
+          const percentB = ((totalB / total) * 100).toFixed(1);
+          const percentC = ((totalC / total) * 100).toFixed(1);
+          const percentD = ((totalD / total) * 100).toFixed(1);
+
+          document.getElementById("percentA").textContent = percentA + "%";
+          document.getElementById("percentB").textContent = percentB + "%";
+          document.getElementById("percentC").textContent = percentC + "%";
+          document.getElementById("percentD").textContent = percentD + "%";
+        }
+      }
+
+      // ========================================
+      // CRÉATION DES GRAPHIQUES
+      // ========================================
+      function createCharts() {
+        createNiveauxChart();
+        createDistributionChart();
+        createMatiereChart();
+      }
+
+      function updateCharts() {
+        if (charts.niveaux) charts.niveaux.destroy();
+        if (charts.distribution) charts.distribution.destroy();
+        if (charts.matiere) charts.matiere.destroy();
+        createCharts();
+      }
+
+      // Graphique de répartition des niveaux (Barres)
+      function createNiveauxChart() {
+        const totalA = filteredData.reduce((sum, row) => sum + (row.A || 0), 0);
+        const totalB = filteredData.reduce((sum, row) => sum + (row.B || 0), 0);
+        const totalC = filteredData.reduce((sum, row) => sum + (row.C || 0), 0);
+        const totalD = filteredData.reduce((sum, row) => sum + (row.D || 0), 0);
+
+        const ctx = document.getElementById("niveauxChart");
+        charts.niveaux = new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels: ["Niveau A", "Niveau B", "Niveau C", "Niveau D"],
+            datasets: [
+              {
+                label: "Pourcentage",
+                data: [totalA, totalB, totalC, totalD],
+                backgroundColor: [
+                  "rgba(40, 167, 69, 0.8)",
+                  "rgba(92, 184, 92, 0.8)",
+                  "rgba(255, 193, 7, 0.8)",
+                  "rgba(220, 53, 69, 0.8)",
+                ],
+                borderColor: [
+                  "rgba(40, 167, 69, 1)",
+                  "rgba(92, 184, 92, 1)",
+                  "rgba(255, 193, 7, 1)",
+                  "rgba(220, 53, 69, 1)",
+                ],
+                borderWidth: 2,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: false,
+              },
+              title: {
+                display: false,
+              },
+              tooltip: {
+                callbacks: {
+                  label: function (context) {
+                    const total = totalA + totalB + totalC + totalD;
+                    const percentage = (
+                      (context.parsed.y / total) *
+                      100
+                    ).toFixed(1);
+                    return percentage + "%";
+                  },
+                },
+              },
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  callback: function (value) {
+                    const total = totalA + totalB + totalC + totalD;
+                    const percentage = total > 0 ? ((value / total) * 100).toFixed(0) : 0;
+                    return percentage + "%";
+                  },
+                },
+              },
+            },
+          },
+        });
+      }
+
+      // Graphique de distribution (Camembert)
+      function createDistributionChart() {
+        const totalA = filteredData.reduce((sum, row) => sum + (row.A || 0), 0);
+        const totalB = filteredData.reduce((sum, row) => sum + (row.B || 0), 0);
+        const totalC = filteredData.reduce((sum, row) => sum + (row.C || 0), 0);
+        const totalD = filteredData.reduce((sum, row) => sum + (row.D || 0), 0);
+
+        const ctx = document.getElementById("distributionChart");
+        charts.distribution = new Chart(ctx, {
+          type: "doughnut",
+          data: {
+            labels: ["Niveau A", "Niveau B", "Niveau C", "Niveau D"],
+            datasets: [
+              {
+                data: [totalA, totalB, totalC, totalD],
+                backgroundColor: [
+                  "rgba(40, 167, 69, 0.8)",
+                  "rgba(92, 184, 92, 0.8)",
+                  "rgba(255, 193, 7, 0.8)",
+                  "rgba(220, 53, 69, 0.8)",
+                ],
+                borderColor: [
+                  "rgba(40, 167, 69, 1)",
+                  "rgba(92, 184, 92, 1)",
+                  "rgba(255, 193, 7, 1)",
+                  "rgba(220, 53, 69, 1)",
+                ],
+                borderWidth: 2,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: "bottom",
+                labels: {
+                  padding: 15,
+                  font: {
+                    size: 12,
+                  },
+                },
+              },
+              tooltip: {
+                callbacks: {
+                  label: function (context) {
+                    const total = totalA + totalB + totalC + totalD;
+                    const percentage = ((context.parsed / total) * 100).toFixed(
+                      1,
+                    );
+                    return (
+                      context.label +
+                      ": " +
+                      context.parsed.toLocaleString("fr-FR") +
+                      " (" +
+                      percentage +
+                      "%)"
+                    );
+                  },
+                },
+              },
+            },
+          },
+        });
+      }
+
+      // Graphique par matière
+      function createMatiereChart() {
+        // Grouper par matière
+        const matiereStats = {};
+
+        filteredData.forEach((row) => {
+          const matiere = row["Matière"];
+          if (!matiere) return;
+
+          if (!matiereStats[matiere]) {
+            matiereStats[matiere] = { A: 0, B: 0, C: 0, D: 0 };
+          }
+
+          matiereStats[matiere].A += row.A || 0;
+          matiereStats[matiere].B += row.B || 0;
+          matiereStats[matiere].C += row.C || 0;
+          matiereStats[matiere].D += row.D || 0;
+        });
+
+        const matieres = Object.keys(matiereStats);
+        const dataA = matieres.map((m) => matiereStats[m].A);
+        const dataB = matieres.map((m) => matiereStats[m].B);
+        const dataC = matieres.map((m) => matiereStats[m].C);
+        const dataD = matieres.map((m) => matiereStats[m].D);
+
+        const ctx = document.getElementById("matiereChart");
+        charts.matiere = new Chart(ctx, {
+          type: "bar",
+          data: {
+            labels: matieres,
+            datasets: [
+              {
+                label: "Niveau A",
+                data: dataA,
+                backgroundColor: "rgba(40, 167, 69, 0.8)",
+                borderColor: "rgba(40, 167, 69, 1)",
+                borderWidth: 1,
+              },
+              {
+                label: "Niveau B",
+                data: dataB,
+                backgroundColor: "rgba(92, 184, 92, 0.8)",
+                borderColor: "rgba(92, 184, 92, 1)",
+                borderWidth: 1,
+              },
+              {
+                label: "Niveau C",
+                data: dataC,
+                backgroundColor: "rgba(255, 193, 7, 0.8)",
+                borderColor: "rgba(255, 193, 7, 1)",
+                borderWidth: 1,
+              },
+              {
+                label: "Niveau D",
+                data: dataD,
+                backgroundColor: "rgba(220, 53, 69, 0.8)",
+                borderColor: "rgba(220, 53, 69, 1)",
+                borderWidth: 1,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: "top",
+              },
+              tooltip: {
+                callbacks: {
+                  label: function (context) {
+                    const matiere = context.label;
+                    const stats = matiereStats[matiere];
+                    const total = stats.A + stats.B + stats.C + stats.D;
+                    const percentage = total > 0 ? ((context.parsed.y / total) * 100).toFixed(1) : 0;
+                    return context.dataset.label + ": " + percentage + "%";
+                  },
+                },
+              },
+            },
+            scales: {
+              x: {
+                stacked: true,
+                ticks: {
+                  maxRotation: 45,
+                  minRotation: 45,
+                },
+              },
+              y: {
+                stacked: true,
+                beginAtZero: true,
+                ticks: {
+                  callback: function (value) {
+                    // Calculer le pourcentage pour l'axe Y
+                    const maxTotal = Math.max(...matieres.map((m) => {
+                      const stats = matiereStats[m];
+                      return stats.A + stats.B + stats.C + stats.D;
+                    }));
+                    const percentage = maxTotal > 0 ? ((value / maxTotal) * 100).toFixed(0) : 0;
+                    return percentage + "%";
+                  },
+                },
+              },
+            },
+          },
+        });
+      }
+
+      // ========================================
+      // AFFICHAGE DES STATISTIQUES PAR COMMUNE
+      // ========================================
+      function displayCommuneStats() {
+        const communeStats = {};
+
+        filteredData.forEach((row) => {
+          const commune = row.Commune;
+          if (!commune) return;
+
+          if (!communeStats[commune]) {
+            communeStats[commune] = {
+              ecoles: new Set(),
+              A: 0,
+              B: 0,
+              C: 0,
+              D: 0,
+            };
+          }
+
+          communeStats[commune].ecoles.add(row.Etablissement);
+          communeStats[commune].A += row.A || 0;
+          communeStats[commune].B += row.B || 0;
+          communeStats[commune].C += row.C || 0;
+          communeStats[commune].D += row.D || 0;
+        });
+
+        const tbody = document.getElementById("communeStatsTable");
+        tbody.innerHTML = "";
+
+        Object.keys(communeStats)
+          .sort()
+          .forEach((commune) => {
+            const stats = communeStats[commune];
+            const total = stats.A + stats.B + stats.C + stats.D;
+
+            const row = document.createElement("tr");
+            row.innerHTML = `
+            <td><strong>${commune}</strong></td>
+            <td class="text-center">${stats.ecoles.size}</td>
+            <td class="text-center">
+                <span class="level-badge level-a">${((stats.A / total) * 100).toFixed(1)}%</span>
+            </td>
+            <td class="text-center">
+                <span class="level-badge level-b">${((stats.B / total) * 100).toFixed(1)}%</span>
+            </td>
+            <td class="text-center">
+                <span class="level-badge level-c">${((stats.C / total) * 100).toFixed(1)}%</span>
+            </td>
+            <td class="text-center">
+                <span class="level-badge level-d">${((stats.D / total) * 100).toFixed(1)}%</span>
+            </td>
+        `;
+            tbody.appendChild(row);
+          });
+      }
+
+      // ========================================
+      // AFFICHAGE DES TOP PERFORMANCES PAR MATIÈRE
+      // ========================================
+      function displayTopPerformers() {
+        displayTopPerformersByMatiere();
+      }
+
+      function displayTopPerformersByMatiere() {
+        const matiereStats = {};
+
+        // Grouper les données par matière, établissement et compétence
+        filteredData.forEach((row) => {
+          const matiere = row["Matière"];
+          const etablissement = row.Etablissement;
+          const commune = row.Commune;
+          const competence = row["Compétence"] || "Non spécifiée";
+
+          if (!matiere || !etablissement) return;
+
+          const key = `${matiere}|${etablissement}|${competence}`;
+
+          if (!matiereStats[key]) {
+            matiereStats[key] = {
+              matiere: matiere,
+              etablissement: etablissement,
+              commune: commune,
+              competence: competence,
+              totalEleves: 0,
+              A: 0,
+              B: 0,
+              C: 0,
+              D: 0,
+            };
+          }
+
+          matiereStats[key].totalEleves += row.NbrElevesAyantPasséLeTest || 0;
+          matiereStats[key].A += row.A || 0;
+          matiereStats[key].B += row.B || 0;
+          matiereStats[key].C += row.C || 0;
+          matiereStats[key].D += row.D || 0;
+        });
+
+        // Calculer le score de performance (A + 2/3*B + 1/3*C)
+        const performances = Object.values(matiereStats).map((stat) => {
+          const total = stat.A + stat.B + stat.C + stat.D;
+          const score =
+            total > 0
+              ? ((stat.A + (2 / 3) * stat.B + (1 / 3) * stat.C) / total) * 100
+              : 0;
+          return { ...stat, score: score };
+        });
+
+        // Grouper par matière
+        const byMatiere = {};
+        performances.forEach((perf) => {
+          if (!byMatiere[perf.matiere]) {
+            byMatiere[perf.matiere] = [];
+          }
+          byMatiere[perf.matiere].push(perf);
+        });
+
+        // Top performers
+        const topContainer = document.getElementById("topPerformersContainer");
+        topContainer.innerHTML = "";
+
+        Object.keys(byMatiere)
+          .sort()
+          .forEach((matiere) => {
+            const sorted = byMatiere[matiere].sort((a, b) => b.score - a.score);
+            const top5 = sorted.slice(0, 5);
+
+            const matiereDiv = document.createElement("div");
+            matiereDiv.className = "mb-4";
+            matiereDiv.innerHTML = `
+            <h6 class="text-primary mb-3"><i class="fas fa-book me-2"></i>${matiere}</h6>
+            <div class="table-wrapper">
+                <table class="table table-sm table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Rang</th>
+                            <th>École</th>
+                            <th>Compétence</th>
+                            <th>Commune</th>
+                            <th class="text-center">Score</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${top5
+                          .map(
+                            (item, index) => `
+                            <tr>
+                                <td>
+                                    <span class="badge-rank rank-${index + 1 <= 3 ? index + 1 : "other"}">
+                                        ${index + 1}
+                                    </span>
+                                </td>
+                                <td>${item.etablissement}</td>
+                                <td><div class="competence-text">${item.competence}</div></td>
+                                <td><small>${item.commune}</small></td>
+                                <td class="text-center">
+                                    <strong style="color: ${getScoreColor(item.score)};">
+                                        ${item.score.toFixed(1)}%
+                                    </strong>
+                                </td>
+                            </tr>
+                        `,
+                          )
+                          .join("")}
+                    </tbody>
+                </table>
+            </div>
+        `;
+            topContainer.appendChild(matiereDiv);
+          });
+
+        // Bottom performers
+        const bottomContainer = document.getElementById(
+          "bottomPerformersContainer",
+        );
+        bottomContainer.innerHTML = "";
+
+        Object.keys(byMatiere)
+          .sort()
+          .forEach((matiere) => {
+            const sorted = byMatiere[matiere].sort((a, b) => a.score - b.score);
+            const bottom5 = sorted.slice(0, 5);
+
+            const matiereDiv = document.createElement("div");
+            matiereDiv.className = "mb-4";
+            matiereDiv.innerHTML = `
+            <h6 class="text-danger mb-3"><i class="fas fa-book me-2"></i>${matiere}</h6>
+            <div class="table-wrapper">
+                <table class="table table-sm table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Rang</th>
+                            <th>École</th>
+                            <th>Compétence</th>
+                            <th>Commune</th>
+                            <th class="text-center">Score</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${bottom5
+                          .map(
+                            (item, index) => `
+                            <tr>
+                                <td>
+                                    <span class="badge-rank rank-other">
+                                        ${index + 1}
+                                    </span>
+                                </td>
+                                <td>${item.etablissement}</td>
+                                <td><div class="competence-text">${item.competence}</div></td>
+                                <td><small>${item.commune}</small></td>
+                                <td class="text-center">
+                                    <strong style="color: ${getScoreColor(item.score)};">
+                                        ${item.score.toFixed(1)}%
+                                    </strong>
+                                </td>
+                            </tr>
+                        `,
+                          )
+                          .join("")}
+                    </tbody>
+                </table>
+            </div>
+        `;
+            bottomContainer.appendChild(matiereDiv);
+          });
+
+        // Ajouter la recherche
+        addSearchFunctionality();
+      }
+
+      // ========================================
+      // FONCTIONS UTILITAIRES
+      // ========================================
+      function getScoreColor(score) {
+        if (score >= 80) return "#28a745";
+        if (score >= 60) return "#5cb85c";
+        if (score >= 40) return "#ffc107";
+        if (score >= 20) return "#fd7e14";
+        return "#dc3545";
+      }
+
+      function addSearchFunctionality() {
+        // Recherche dans le top performers
+        const searchTopInput = document.getElementById("searchTopMatiere");
+        searchTopInput.addEventListener("input", function (e) {
+          const searchTerm = e.target.value.toLowerCase();
+          const container = document.getElementById("topPerformersContainer");
+          const matiereDivs = container.querySelectorAll(".mb-4");
+
+          matiereDivs.forEach((div) => {
+            const matiereTitle = div
+              .querySelector("h6")
+              .textContent.toLowerCase();
+            if (matiereTitle.includes(searchTerm)) {
+              div.style.display = "block";
+            } else {
+              div.style.display = "none";
+            }
+          });
+        });
+
+        // Recherche dans le bottom performers
+        const searchBottomInput = document.getElementById(
+          "searchBottomMatiere",
+        );
+        searchBottomInput.addEventListener("input", function (e) {
+          const searchTerm = e.target.value.toLowerCase();
+          const container = document.getElementById(
+            "bottomPerformersContainer",
+          );
+          const matiereDivs = container.querySelectorAll(".mb-4");
+
+          matiereDivs.forEach((div) => {
+            const matiereTitle = div
+              .querySelector("h6")
+              .textContent.toLowerCase();
+            if (matiereTitle.includes(searchTerm)) {
+              div.style.display = "block";
+            } else {
+              div.style.display = "none";
+            }
+          });
+        });
+      }
+
+      // ========================================
+      // INITIALISATION AU CHARGEMENT
+      // ========================================
+      console.log("Dashboard Pédagogique - Prêt à l'utilisation");
+      console.log("Développé pour la Délégation de l'Éducation");
+    </script>
+  </body>
+</html>
